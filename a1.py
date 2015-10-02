@@ -1,7 +1,8 @@
 #!/usr/bin/python
 
 import sys
-streets = []
+streets = {}
+vertex = set()
 
 def inputAnalysis(input):
 	input1=' '.join(input.split())
@@ -9,89 +10,122 @@ def inputAnalysis(input):
 	cmd=input2[0].strip()
 	result = []
 	if cmd not in ['a', 'c', 'r', 'g']:
-		print>>sys.stderr, "Error: <", cmd. "> is not a valid command.\n",
-	if cmd == 'a' || 'c' || 'r':
+		print>>sys.stderr, "Error: <", cmd, "> is not a valid command.\n",
+	if cmd == 'a' or 'c' or 'r':
 		if len(input2) != 3:
-			print>>sys.stderr, "Error: entered no double cotation-wrong format",
+			print>>sys.stderr, "Error: entered no double cotation-wrong format\n",
 		name=input2[1].strip()
-		points= input[2].strip()
+		if name == '':
+			print>>sys.stderr, "Error: Name of street can not be empty.\n",
+		points= input2[2].strip()
 		result.append(cmd)
 		result.append(name)
 		result.append(points)
 	elif cmd == 'g':
-		if len(input2) != 1
-			print>>sys.stderr, "Error: entered points for g",
+		if len(input2) != 1:
+			print>>sys.stderr, "Error: entered points for g.\n",
 		result.append(cmd)
 	return result
 
-"""def pointsAnalysis(points)
-	if len(points) == 0 || len(points) == 1:
-		print>>sys.stderr, "Error: entered one or no point",
-	temp = points.split()
-	for i in range (0, len(points)):
+
+def pointsError(points):
+	if points[0] != '(':
+		print>>sys.stderr, "Error: wrong format input.\n",
+	n = len(points)
+        if points[n-2] != ')':
+		print>>sys.stderr, "Error: Wrong format input.\n",
+        i = 0
+        flag = 0
+        while points[i] != '\n':
+		if points[i] == '(':
+                	if flag == 1 or flag == 2:
+				print>>sys.stderr, "Error: Wrong format input.\n",
+                        flag = 1
+                        i=i+1
+                elif points[i] == ',':
+                       	if flag != 1:
+				print>>sys.stderr, "Error: Wrong format input.\n",
+                        flag = 2
+                        i=i+1
+                elif points[i] == ')':
+                        if flag != 2:
+				print>>sys.stderr, "Error: Wrong format input.\n",
+                        flag = 3
+                        i=i+1
+                else:
+			if points[i] != '-':
+				if ord(points[i]) < ord('0') or ord(points[i])> ord('9'):
+					print>>sys.stderr, "Error: not number.\n",
+                        i=i+1
+
+
 		
-	
-		
-def extraxtNumbers(str):
-    result=[]
-    i=1
-    if str[0]!='(':
-       raise IndexError
-    number1=[]
-    number2=[]
-    while str[i]!=',':
-          number1.append(str[i])
-          i=i+1
-    temp1=''.join(number1)
-    result.append(float(temp1))
-    i=i+1
-    while str[i]!=')':
-          number2.append(str[i])
-          i=i+1
-    temp2=''.join(number2)
-    result.append(float(temp2))
-    if (i+1)<len(str):
-       raise IndexError    
-    return result"""
+def extractNumbers(str):
+	result=[]
+	i=0
+	number1=[]
+    	number2=[]
+    	while str[i]!=',':
+		number1.append(str[i])
+        	i=i+1
+    	temp1=''.join(number1)
+    	result.append(float(temp1))
+    	i=i+1
+    	while str[i]!=')':
+        	number2.append(str[i])
+        	i=i+1
+    	temp2=''.join(number2)
+    	result.append(float(temp2))
+    	return result
+
 
 while True:
 	input = raw_input()
 	analyzedInput = inputAnalysis(input)
-	if analyzedInput[0] == 'a':
-		streets.append(analyzedInput[1])
-		temp = analyzedInput[2]
-		points = '', join(temp.split())
-		if points[0] != '(':
-			print>>sys.stderr, "Error: wrong format input",
-		n = len(points)
-		if points[n-1] != ')':
-			print>>sys.stderr, "Error: Wrong format input",
-		i = 0
-		flag = 0
-		while points[i] != '\n':
-			if points[i] == '(':
-				if flag != 3 || flag != 0:
-					print>>sts.stderr, "Error: Wrong format input",
-				flag = 1
-				i++
-			elif points[i] == ',':
-				if flag != 1:
-					print>>sys.stderr, "Error: Wrong format input",
-				flag = 2
-				i++
-			elif points[i] == ')':
-				if flag != 2:
-					print>>sys.stderr, "Error: Wrong format input",
-				flag = 3
-				i++					
-			else:
-				if ord(points[i]) < ord('0') || ord(points[i])> ord('9')
-					print>>sys.stderr, "Error: not number",
-				i++
-		
-		
-	elif analyzedInput[0] == 'c':
-	elif analyzedInput[0] == 'r':
-	elif analyzedInput[0] == 'g':
-		
 
+	if analyzedInput[0] == 'a':
+		if streets.has_key(analyzedInput[1]):
+			print>>sys.stderr, "Error: This street exists.\n",
+		else:
+			temp = analyzedInput[2]
+			points = ''. join(temp.split())
+			pointsError(points+'\n')
+			twoPoint = points.split('(')
+			analyzedNumbers = []
+			for i in range(1, len(twoPoint)):
+				analyzedNumbers.append(extractNumbers(twoPoint[i]))
+			for i in range(0,len(analyzedNumbers)):
+                                for j in range(i+1,len(analyzedNumbers)):
+                                        if analyzedNumbers[i]==analyzedNumbers[j]:
+                                                print>>sys.stderr, "Error: same points for one street.\n",
+			streets[analyzedInput[1]] = analyzedNumbers
+
+	elif analyzedInput[0] == 'c':
+                if streets.has_key(analyzedInput[1]):
+                        temp = analyzedInput[2]
+                        points = ''. join(temp.split())
+                        pointsError(points+'\n')
+                        twoPoint = points.split('(')
+                        analyzedNumbers = []
+                        for i in range(1, len(twoPoint)):
+                                analyzedNumbers.append(extractNumbers(twoPoint[i]))
+			for i in range(0,len(analyzedNumbers)):
+            			for j in range(i+1,len(analyzedNumbers)):
+                			if analyzedNumbers[i]==analyzedNumbers[j]:
+                   				print>>sys.stderr, "Error: same points for one street.\n",
+                        streets[analyzedInput[1]] = analyzedNumbers
+
+                else:
+                        print>>sys.stderr, "Error: This street does not exist.\n",
+	
+	elif analyzedInput[0] == 'r':
+		if analyzedInput[2] != '':
+			print>>sys.stderr, "Error: r command does not come with points\n",
+		if streets.has_key(analyzedInput[1]):
+			del streets[analyzedInput[1]]
+		else:
+			print>>sys.stderr, "Error: This street does not exist.\n",
+
+	
+	elif analyzedInput[0] == 'g':
+			
