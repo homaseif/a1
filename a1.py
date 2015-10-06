@@ -11,10 +11,11 @@ def inputAnalysis(input):
 	result = []
 	if cmd not in ['a', 'c', 'r', 'g']:
 		print>>sys.stderr, "Error: <", cmd, "> is not a valid command.\n",
-	if cmd == 'a' or 'c' or 'r':
+	if cmd == 'a' or cmd == 'c' or cmd == 'r':
 		if len(input2) != 3:
 			print>>sys.stderr, "Error: entered no double cotation-wrong format\n",
-		name=input2[1].strip()
+		temp=input2[1].strip()
+		name = ' '.join(temp.split())
 		if name == '':
 			print>>sys.stderr, "Error: Name of street can not be empty.\n",
 		points= input2[2].strip()
@@ -23,7 +24,7 @@ def inputAnalysis(input):
 		result.append(points)
 	elif cmd == 'g':
 		if len(input2) != 1:
-			print>>sys.stderr, "Error: entered points for g.\n",
+			print>>sys.stderr, "Error: entered points or street names for g.\n",
 		result.append(cmd)
 	return result
 
@@ -78,8 +79,23 @@ def extractNumbers(str):
     	result.append(float(temp2))
     	return result
 
+def findIntersection(x1, y1, x2, y2, w1, z1, w2, z2):
+	a1 = y2 - y1
+	b1 = x1 - x2
+	c1 = a1*x1 + b1*y1
+	a2 = z2 - z1
+	b2 = w1 - w2
+	c2 = a2*w1 + b2*z1
+	slopesDif = a1*b2 - a2*b1
+	if (slopesDif != 0):
+		x = (b2*c1 - b1*c2)/slopesDif
+		y = (a1*c2 - a2*c1)/slopesDif
+		if x >= min([x1,x2]) and x <= max([x1,x2]) and x >= min([w1,w2]) and x <= max([w1,w2]) and y >= min([y1,y2]) and y <= max([y1,y2]) and y >= min([z1,z2]) and y <= max([z1,z2]):
+			return [x,y]
+
 
 while True:
+  try:
 	input = raw_input()
 	analyzedInput = inputAnalysis(input)
 
@@ -128,4 +144,9 @@ while True:
 
 	
 	elif analyzedInput[0] == 'g':
-			
+		lines = []
+		lines.extend(streets.values())
+		for i in range ()		
+	print streets			
+  except EOFError:
+	break
