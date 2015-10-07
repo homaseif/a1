@@ -2,7 +2,9 @@
 
 import sys
 streets = {}
-vertex = set()
+vertex = []
+intersections = set()
+edges = []
 
 def inputAnalysis(input):
 	input1=' '.join(input.split())
@@ -146,7 +148,22 @@ while True:
 	elif analyzedInput[0] == 'g':
 		lines = []
 		lines.extend(streets.values())
-		for i in range ()		
-	print streets			
+		for i in range(0, len(lines)):
+			for j in range(i+1, len(lines)):
+				for k in range(0, len(lines[i])-1):
+					for l in range(0, len(lines[j])-1):
+						inters = findIntersection(lines[i][k][0], lines[i][k][1], lines[i][k+1][0], lines[i][k+1][1], lines[j][l][0], lines[j][l][1], lines[j][l+1][0], lines[j][l+1][1])
+						if inters != None:
+							intersections.add(inters)
+							if not in vertex:
+							vertex.append(inters)
+							vertex.append(lines[i][k])
+							vertex.append(lines[i][k+1])
+							vertex.append(lines[j][l])
+							vertex.append(lines[j][l+1])
+							edges.add
+							lines.insert(line[i][k+1], inters)
+							lines.insert(line[j][l+1], inters)
+	print streets
   except EOFError:
 	break
