@@ -1,10 +1,11 @@
 #!/usr/bin/python
 
 import sys
+import copy
 streets = {}
 vertex = []
-intersections = set()
-edges = []
+intersections = []
+edge = []
 
 def inputAnalysis(input):
 	input1=' '.join(input.split())
@@ -16,8 +17,7 @@ def inputAnalysis(input):
 	if cmd == 'a' or cmd == 'c' or cmd == 'r':
 		if len(input2) != 3:
 			print>>sys.stderr, "Error: entered no double cotation-wrong format\n",
-		temp=input2[1].strip()
-		name = ' '.join(temp.split())
+		name=input2[1]
 		if name == '':
 			print>>sys.stderr, "Error: Name of street can not be empty.\n",
 		points= input2[2].strip()
@@ -81,6 +81,8 @@ def extractNumbers(str):
     	result.append(float(temp2))
     	return result
 
+
+
 def findIntersection(x1, y1, x2, y2, w1, z1, w2, z2):
 	a1 = y2 - y1
 	b1 = x1 - x2
@@ -94,6 +96,21 @@ def findIntersection(x1, y1, x2, y2, w1, z1, w2, z2):
 		y = (a1*c2 - a2*c1)/slopesDif
 		if x >= min([x1,x2]) and x <= max([x1,x2]) and x >= min([w1,w2]) and x <= max([w1,w2]) and y >= min([y1,y2]) and y <= max([y1,y2]) and y >= min([z1,z2]) and y <= max([z1,z2]):
 			return [x,y]
+
+
+def printGraph(vertices, edges):
+	print "V = {\n",
+	for i in range(0, len(vertices)):
+		print " ", i+1, ": (", vertices[i][0], ",", vertices[i][1], ")\n",
+	print "}\n",
+
+	print "E = {\n",
+	for i in range(0, len(edges)-1):
+		print " <", edges[i][0]+1, ",", edges[i][1]+1, ">,\n",
+	if len(edges) != 0:
+		print " <", edges[len(edges)-1][0]+1, ",", edges[len(edges)-1][1]+1, ">\n",
+	print "}\n"
+
 
 
 while True:
@@ -146,24 +163,42 @@ while True:
 
 	
 	elif analyzedInput[0] == 'g':
+		vertex = []
+		edges = []
+		intersections = []
 		lines = []
-		lines.extend(streets.values())
+		#correct copying??
+		temp = copy.copy(streets.values())
+		lines = copy.copy(temp)
 		for i in range(0, len(lines)):
 			for j in range(i+1, len(lines)):
 				for k in range(0, len(lines[i])-1):
 					for l in range(0, len(lines[j])-1):
 						inters = findIntersection(lines[i][k][0], lines[i][k][1], lines[i][k+1][0], lines[i][k+1][1], lines[j][l][0], lines[j][l][1], lines[j][l+1][0], lines[j][l+1][1])
 						if inters != None:
-							intersections.add(inters)
-							if not in vertex:
-							vertex.append(inters)
-							vertex.append(lines[i][k])
-							vertex.append(lines[i][k+1])
-							vertex.append(lines[j][l])
-							vertex.append(lines[j][l+1])
-							edges.add
-							lines.insert(line[i][k+1], inters)
-							lines.insert(line[j][l+1], inters)
+							if inters not in intersections:
+								intersections.append(inters)
+							# if it is not there?
+							lines[i].insert(k+1, inters)
+							lines[j].insert(l+1, inters)
+		# find edges and vertices
+		vertex = intersections
+		for x in intersections:
+			for i in range(0, len(lines)):
+				for j in range(0, len(lines[i])):
+					if x == lines[i][j]:
+						a = vertex.index(x)
+						if j-1 >= 0 and lines[i][j-1] not in vertex:
+							vertex.append(lines[i][j-1])
+							b = vertex.index(lines[i][j-1])
+							edge.append([a,b])
+						if j+1 < len(lines[i]) and lines[i][j+1] not in vertex:
+							vertex.append(lines[i][j+1])
+							c = vertex.index(lines[i][j+1])
+							edge.append([a,c])
+		# print vertices and edges
+		printGraph(vertex, edge)
+		print lines
 	print streets
   except EOFError:
 	break
