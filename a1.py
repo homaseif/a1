@@ -2,6 +2,7 @@
 
 import sys
 import copy
+from copy import deepcopy
 streets = {}
 vertex = []
 intersections = []
@@ -106,9 +107,9 @@ def printGraph(vertices, edges):
 
 	print "E = {\n",
 	for i in range(0, len(edges)-1):
-		print " <", edges[i][0]+1, ",", edges[i][1]+1, ">,\n",
+		print " ", "<", edges[i][0]+1, ",", edges[i][1]+1, ">,\n",
 	if len(edges) != 0:
-		print " <", edges[len(edges)-1][0]+1, ",", edges[len(edges)-1][1]+1, ">\n",
+		print " ", "<",  edges[len(edges)-1][0]+1, ",", edges[len(edges)-1][1]+1, ">\n",
 	print "}\n"
 
 
@@ -156,7 +157,7 @@ while True:
 	elif analyzedInput[0] == 'r':
 		if analyzedInput[2] != '':
 			print>>sys.stderr, "Error: r command does not come with points\n",
-		if streets.has_key(analyzedInput[1]):
+		if streets.has_key(analyzedInput[1]) == True:
 			del streets[analyzedInput[1]]
 		else:
 			print>>sys.stderr, "Error: This street does not exist.\n",
@@ -164,12 +165,10 @@ while True:
 	
 	elif analyzedInput[0] == 'g':
 		vertex = []
-		edges = []
+		edge = []
 		intersections = []
 		lines = []
-		#correct copying??
-		temp = copy.copy(streets.values())
-		lines = copy.copy(temp)
+		lines = copy.deepcopy(streets.values()) 
 		for i in range(0, len(lines)):
 			for j in range(i+1, len(lines)):
 				for k in range(0, len(lines[i])-1):
@@ -178,27 +177,34 @@ while True:
 						if inters != None:
 							if inters not in intersections:
 								intersections.append(inters)
-							# if it is not there?
-							lines[i].insert(k+1, inters)
-							lines[j].insert(l+1, inters)
+							if lines[i][k] != inters and lines[i][k+1] != inters:
+								lines[i].insert(k+1, inters)
+							if lines[j][l] != inters and lines[j][l+1] != inters:
+								lines[j].insert(l+1, inters)
 		# find edges and vertices
-		vertex = intersections
+		vertex = copy.deepcopy(intersections)
 		for x in intersections:
 			for i in range(0, len(lines)):
 				for j in range(0, len(lines[i])):
 					if x == lines[i][j]:
 						a = vertex.index(x)
-						if j-1 >= 0 and lines[i][j-1] not in vertex:
-							vertex.append(lines[i][j-1])
+						if j-1 >= 0: 
+							if lines[i][j-1] not in vertex:
+								vertex.append(lines[i][j-1])
 							b = vertex.index(lines[i][j-1])
-							edge.append([a,b])
-						if j+1 < len(lines[i]) and lines[i][j+1] not in vertex:
-							vertex.append(lines[i][j+1])
+							minab = min(a,b)
+							maxab = max(a,b)
+							if [minab,maxab] not in edge:
+								edge.append([minab,maxab])
+						if j+1 < len(lines[i]): 
+							if lines[i][j+1] not in vertex:
+								vertex.append(lines[i][j+1])
 							c = vertex.index(lines[i][j+1])
-							edge.append([a,c])
+							minac = min(a,c)
+							maxac = max(a,c)
+							if [minac,maxac] not in edge:
+								edge.append([minac,maxac])
 		# print vertices and edges
 		printGraph(vertex, edge)
-		print lines
-	print streets
   except EOFError:
 	break
