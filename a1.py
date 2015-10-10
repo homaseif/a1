@@ -3,65 +3,74 @@
 import sys
 import copy
 from copy import deepcopy
+
+
 streets = {}
 vertex = []
 intersections = []
 edge = []
+
+
+class Error(Exception):
+	pass
+class UserInputError(Error):
+	pass
+class EndPointError(Error):
+	pass
+		
 
 def inputAnalysis(input):
 	input1=' '.join(input.split())
 	input2=input1.split('"')
 	cmd=input2[0].strip()
 	result = []
-	if cmd not in ['a', 'c', 'r', 'g']:
+	if cmd not in ['a', 'c', 'r', 'g', '']:
 		print>>sys.stderr, "Error: <", cmd, "> is not a valid command.\n",
 	if cmd == 'a' or cmd == 'c' or cmd == 'r':
 		if len(input2) != 3:
-			print>>sys.stderr, "Error: entered no double cotation-wrong format\n",
+			print>>sys.stderr, "Error: Name of the street is not specified or specified without double quotation.\n",
 		name=input2[1]
-		if name == '':
-			print>>sys.stderr, "Error: Name of street can not be empty.\n",
 		points= input2[2].strip()
 		result.append(cmd)
 		result.append(name)
 		result.append(points)
 	elif cmd == 'g':
 		if len(input2) != 1:
-			print>>sys.stderr, "Error: entered points or street names for g.\n",
+			print>>sys.stderr, "Error: Street name or coordinates is/are specified for command 'g'.\n",
+			raise IndexError
 		result.append(cmd)
 	return result
 
 
 def pointsError(points):
 	if points[0] != '(':
-		print>>sys.stderr, "Error: wrong format input.\n",
+		raise UserInputError
 	n = len(points)
         if points[n-2] != ')':
-		print>>sys.stderr, "Error: Wrong format input.\n",
+		raise UserInputError
         i = 0
         flag = 0
         while points[i] != '\n':
 		if points[i] == '(':
                 	if flag == 1 or flag == 2:
-				print>>sys.stderr, "Error: Wrong format input.\n",
+				raise UserInputError
                         flag = 1
                         i=i+1
                 elif points[i] == ',':
                        	if flag != 1:
-				print>>sys.stderr, "Error: Wrong format input.\n",
+				raise UserInputError
                         flag = 2
                         i=i+1
                 elif points[i] == ')':
                         if flag != 2:
-				print>>sys.stderr, "Error: Wrong format input.\n",
+				raise UserInputError
                         flag = 3
                         i=i+1
                 else:
 			if points[i] != '-':
 				if ord(points[i]) < ord('0') or ord(points[i])> ord('9'):
-					print>>sys.stderr, "Error: not number.\n",
+					raise ValueError
                         i=i+1
-
 
 		
 def extractNumbers(str):
@@ -72,14 +81,18 @@ def extractNumbers(str):
     	while str[i]!=',':
 		number1.append(str[i])
         	i=i+1
+	if len(number1) == 0:
+		raise ValueError
     	temp1=''.join(number1)
-    	result.append(float(temp1))
+    	result.append(temp1)
     	i=i+1
     	while str[i]!=')':
         	number2.append(str[i])
         	i=i+1
+	if len(number2) == 0:
+		raise ValueError
     	temp2=''.join(number2)
-    	result.append(float(temp2))
+    	result.append(temp2)
     	return result
 
 
@@ -96,21 +109,21 @@ def findIntersection(x1, y1, x2, y2, w1, z1, w2, z2):
 		x = (b2*c1 - b1*c2)/slopesDif
 		y = (a1*c2 - a2*c1)/slopesDif
 		if x >= min([x1,x2]) and x <= max([x1,x2]) and x >= min([w1,w2]) and x <= max([w1,w2]) and y >= min([y1,y2]) and y <= max([y1,y2]) and y >= min([z1,z2]) and y <= max([z1,z2]):
-			return [x,y]
+			return [round(x,2),round(y,2)]
 
 
 def printGraph(vertices, edges):
-	print "V = {\n",
+	print>>sys.stdout, "V = {\n",
 	for i in range(0, len(vertices)):
-		print " ", i+1, ": (", vertices[i][0], ",", vertices[i][1], ")\n",
-	print "}\n",
+		print>>sys.stdout, " ", i+1, ": (", vertices[i][0], ",", vertices[i][1], ")\n",
+	print>>sys.stdout, "}\n",
 
-	print "E = {\n",
+	print>>sys.stdout, "E = {\n",
 	for i in range(0, len(edges)-1):
-		print " ", "<", edges[i][0]+1, ",", edges[i][1]+1, ">,\n",
+		print>>sys.stdout, " ", "<", edges[i][0]+1, ",", edges[i][1]+1, ">,\n",
 	if len(edges) != 0:
-		print " ", "<",  edges[len(edges)-1][0]+1, ",", edges[len(edges)-1][1]+1, ">\n",
-	print "}\n"
+		print>>sys.stdout, " ", "<",  edges[len(edges)-1][0]+1, ",", edges[len(edges)-1][1]+1, ">\n",
+	print>>sys.stdout, "}"
 
 
 
@@ -118,22 +131,27 @@ while True:
   try:
 	input = raw_input()
 	analyzedInput = inputAnalysis(input)
-
 	if analyzedInput[0] == 'a':
 		if streets.has_key(analyzedInput[1]):
-			print>>sys.stderr, "Error: This street exists.\n",
+			print>>sys.stderr, "Error: 'a' specified for a street that exists.\n",
 		else:
 			temp = analyzedInput[2]
 			points = ''. join(temp.split())
 			pointsError(points+'\n')
 			twoPoint = points.split('(')
+
+			if len(twoPoint) < 3:
+				raise EndPointError
+
 			analyzedNumbers = []
 			for i in range(1, len(twoPoint)):
 				analyzedNumbers.append(extractNumbers(twoPoint[i]))
-			for i in range(0,len(analyzedNumbers)):
-                                for j in range(i+1,len(analyzedNumbers)):
-                                        if analyzedNumbers[i]==analyzedNumbers[j]:
-                                                print>>sys.stderr, "Error: same points for one street.\n",
+
+			for i in range(1, len(analyzedNumbers)):
+				if analyzedNumbers[i] == analyzedNumbers[i-1]:
+					print>>sys.stderr, "Error: Entered repetitive consecutive coordinates.\n",
+					raise IndexError
+
 			streets[analyzedInput[1]] = analyzedNumbers
 
 	elif analyzedInput[0] == 'c':
@@ -142,25 +160,31 @@ while True:
                         points = ''. join(temp.split())
                         pointsError(points+'\n')
                         twoPoint = points.split('(')
+
+			if len(twoPoint) <3:
+				raise EndPointError
+
                         analyzedNumbers = []
                         for i in range(1, len(twoPoint)):
                                 analyzedNumbers.append(extractNumbers(twoPoint[i]))
-			for i in range(0,len(analyzedNumbers)):
-            			for j in range(i+1,len(analyzedNumbers)):
-                			if analyzedNumbers[i]==analyzedNumbers[j]:
-                   				print>>sys.stderr, "Error: same points for one street.\n",
+
+			for i in range(1, len(analyzedNumbers)):
+                        	if analyzedNumbers[i] == analyzedNumbers[i-1]:
+                                	print>>sys.stderr, "Error: Entered repetitive consecutive coordinates.\n",
+					raise IndexError
+
                         streets[analyzedInput[1]] = analyzedNumbers
 
                 else:
-                        print>>sys.stderr, "Error: This street does not exist.\n",
+                        print>>sys.stderr, "Error: 'c' specified for a street that does not exist.\n",
 	
 	elif analyzedInput[0] == 'r':
 		if analyzedInput[2] != '':
-			print>>sys.stderr, "Error: r command does not come with points\n",
-		if streets.has_key(analyzedInput[1]) == True:
+			print>>sys.stderr, "Error: Coordinates specified for command 'r'.\n",
+		elif streets.has_key(analyzedInput[1]) == True:
 			del streets[analyzedInput[1]]
 		else:
-			print>>sys.stderr, "Error: This street does not exist.\n",
+			print>>sys.stderr, "Error: 'r' specified for a street that does not exist.\n",
 
 	
 	elif analyzedInput[0] == 'g':
@@ -173,7 +197,7 @@ while True:
 			for j in range(i+1, len(lines)):
 				for k in range(0, len(lines[i])-1):
 					for l in range(0, len(lines[j])-1):
-						inters = findIntersection(lines[i][k][0], lines[i][k][1], lines[i][k+1][0], lines[i][k+1][1], lines[j][l][0], lines[j][l][1], lines[j][l+1][0], lines[j][l+1][1])
+						inters = findIntersection(float(lines[i][k][0]), float(lines[i][k][1]), float(lines[i][k+1][0]), float(lines[i][k+1][1]), float(lines[j][l][0]), float(lines[j][l][1]), float(lines[j][l+1][0]), float(lines[j][l+1][1]))
 						if inters != None:
 							if inters not in intersections:
 								intersections.append(inters)
@@ -206,5 +230,14 @@ while True:
 								edge.append([minac,maxac])
 		# print vertices and edges
 		printGraph(vertex, edge)
+		
   except EOFError:
-	break
+     break
+  except IndexError:
+     pass
+  except ValueError:
+     print>>sys.stderr, "Error: Entered invalid input instead of numbers for coordinates. \n",
+  except UserInputError:
+     print>>sys.stderr, "Error: Entered wrong format of coordinates. (Missing parenthesis, comma or etc) \n",
+  except EndPointError:
+     print>>sys.stderr, "Error: No end point is entered for the street.\n",
