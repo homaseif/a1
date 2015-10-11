@@ -1,0 +1,12 @@
+a "Columbia" ( -3,-2) (-2, 0) (6 , 2 )
+a "University" (1,-2)(2,-1)(6,0)
+a "Phillip" (2,-2 ) ( 2 , 2 )
+a "Lester" (3,-4)
+a "Albert" (4,-2) (4,2)
+a "Hazel" (5,-1) (5,2)
+a "University" (6,-4) (8,12)
+r "King"
+c "King"
+g
+c "Hazel" (5,0) (5 , 2)
+g
