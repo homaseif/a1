@@ -17,9 +17,14 @@ class UserInputError(Error):
 	pass
 class EndPointError(Error):
 	pass
+	
 		
 
 def inputAnalysis(input):
+	""" Analysis of the input to separate
+	 the command, street name and the coordinates
+	 if applicable."""
+
 	input1=' '.join(input.split())
 	input2=input1.split('"')
 	cmd=input2[0].strip()
@@ -43,6 +48,9 @@ def inputAnalysis(input):
 
 
 def pointsError(points):
+	""" Analysis of coordinates
+	 to find the errors."""
+
 	if points[0] != '(':
 		raise UserInputError
 	n = len(points)
@@ -74,6 +82,10 @@ def pointsError(points):
 
 		
 def extractNumbers(str):
+	""" Receives (x,y), extracts x and y, 
+	converts them to numbers and
+	returns them as a list."""
+
 	result=[]
 	i=0
 	number1=[]
@@ -98,6 +110,12 @@ def extractNumbers(str):
 
 
 def findIntersection(x1, y1, x2, y2, w1, z1, w2, z2):
+	""" Receives the coordinates
+	 of two line segments, finds
+	 the intrsection of them and
+	 returns the result as a list
+	 if there is any intersection."""
+
 	a1 = y2 - y1
 	b1 = x1 - x2
 	c1 = a1*x1 + b1*y1
@@ -113,6 +131,10 @@ def findIntersection(x1, y1, x2, y2, w1, z1, w2, z2):
 
 
 def printGraph(vertices, edges):
+	""" Print the graph by
+	 printing the vertices
+	 and edges."""
+
 	print>>sys.stdout, "V = {\n",
 	for i in range(0, len(vertices)):
 		print>>sys.stdout, " ", i+1, ": (", vertices[i][0], ",", vertices[i][1], ")\n",
@@ -131,9 +153,10 @@ while True:
   try:
 	input = raw_input()
 	analyzedInput = inputAnalysis(input)
+
 	if analyzedInput[0] == 'a':
 		if streets.has_key(analyzedInput[1]):
-			print>>sys.stderr, "Error: 'a' specified for a street that exists.\n",
+			print>>sys.stderr, "Error: 'a' specified for a street that already exists.\n",
 		else:
 			temp = analyzedInput[2]
 			points = ''. join(temp.split())
@@ -240,4 +263,4 @@ while True:
   except UserInputError:
      print>>sys.stderr, "Error: Entered wrong format of coordinates. (Missing parenthesis, comma or etc) \n",
   except EndPointError:
-     print>>sys.stderr, "Error: No end point is entered for the street.\n",
+     print>>sys.stderr, "Error: Incomplete coordinates for the street, no end point.\n",
