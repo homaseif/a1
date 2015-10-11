@@ -10,7 +10,6 @@ vertex = []
 intersections = []
 edge = []
 
-
 class Error(Exception):
 	pass
 class UserInputError(Error):
@@ -96,7 +95,7 @@ def extractNumbers(str):
 	if len(number1) == 0:
 		raise ValueError
     	temp1=''.join(number1)
-    	result.append(temp1)
+    	result.append(float(temp1))
     	i=i+1
     	while str[i]!=')':
         	number2.append(str[i])
@@ -104,7 +103,7 @@ def extractNumbers(str):
 	if len(number2) == 0:
 		raise ValueError
     	temp2=''.join(number2)
-    	result.append(temp2)
+    	result.append(float(temp2))
     	return result
 
 
@@ -215,12 +214,17 @@ while True:
 		edge = []
 		intersections = []
 		lines = []
-		lines = copy.deepcopy(streets.values()) 
+		lines = copy.deepcopy(streets.values())
+		for i in range(0, len(lines)):
+			lines[i].append('\n')
+
 		for i in range(0, len(lines)):
 			for j in range(i+1, len(lines)):
-				for k in range(0, len(lines[i])-1):
-					for l in range(0, len(lines[j])-1):
-						inters = findIntersection(float(lines[i][k][0]), float(lines[i][k][1]), float(lines[i][k+1][0]), float(lines[i][k+1][1]), float(lines[j][l][0]), float(lines[j][l][1]), float(lines[j][l+1][0]), float(lines[j][l+1][1]))
+				k = 0
+				while lines[i][k+1] != '\n':
+					l = 0
+					while lines[j][l+1] != '\n':
+						inters = findIntersection(lines[i][k][0], lines[i][k][1], lines[i][k+1][0], lines[i][k+1][1], lines[j][l][0], lines[j][l][1], lines[j][l+1][0], lines[j][l+1][1])
 						if inters != None:
 							if inters not in intersections:
 								intersections.append(inters)
@@ -228,6 +232,9 @@ while True:
 								lines[i].insert(k+1, inters)
 							if lines[j][l] != inters and lines[j][l+1] != inters:
 								lines[j].insert(l+1, inters)
+						l = l+1
+					k= k+1
+
 		# find edges and vertices
 		vertex = copy.deepcopy(intersections)
 		for x in intersections:
@@ -251,6 +258,7 @@ while True:
 							maxac = max(a,c)
 							if [minac,maxac] not in edge:
 								edge.append([minac,maxac])
+
 		# print vertices and edges
 		printGraph(vertex, edge)
 		
