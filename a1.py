@@ -247,30 +247,31 @@ while True:
 								lines[j].insert(l+1, inters)
 						l = l+1
 					k= k+1
-
 		# find edges and vertices
 		vertex = copy.deepcopy(intersections)
 		for x in intersections:
 			for i in range(0, len(lines)):
-				for j in range(0, len(lines[i])):
+				for j in range(0, len(lines[i])-1):
 					if x == lines[i][j]:
 						a = vertex.index(x)
 						if j-1 >= 0: 
-							if lines[i][j-1] not in vertex:
-								vertex.append(lines[i][j-1])
-							b = vertex.index(lines[i][j-1])
-							minab = min(a,b)
-							maxab = max(a,b)
-							if [minab,maxab] not in edge:
-								edge.append([minab,maxab])
+							if lines[i][j-1] != '\n':
+								if lines[i][j-1] not in vertex:
+									vertex.append(lines[i][j-1])
+								b = vertex.index(lines[i][j-1])
+								minab = min(a,b)
+								maxab = max(a,b)
+								if [minab,maxab] not in edge:
+									edge.append([minab,maxab])
 						if j+1 < len(lines[i]): 
-							if lines[i][j+1] not in vertex:
-								vertex.append(lines[i][j+1])
-							c = vertex.index(lines[i][j+1])
-							minac = min(a,c)
-							maxac = max(a,c)
-							if [minac,maxac] not in edge:
-								edge.append([minac,maxac])
+							if lines[i][j+1] != '\n':
+								if lines[i][j+1] not in vertex:
+									vertex.append(lines[i][j+1])
+								c = vertex.index(lines[i][j+1])
+								minac = min(a,c)
+								maxac = max(a,c)
+								if [minac,maxac] not in edge:
+									edge.append([minac,maxac])
 
 		# print vertices and edges
 		printGraph(vertex, edge)
@@ -279,8 +280,8 @@ while True:
      break
   except IndexError:
      pass
-  except ValueError:
-     print>>sys.stderr, "Error: Entered invalid input instead of numbers for coordinates. \n",
+#  except ValueError:
+#     print>>sys.stderr, "Error: Entered invalid input instead of numbers for coordinates.\n",
   except UserInputError:
      print>>sys.stderr, "Error: Entered wrong format of coordinates. (Missing parenthesis, comma or etc) \n",
   except EndPointError:
