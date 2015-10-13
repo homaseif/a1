@@ -16,7 +16,8 @@ class UserInputError(Error):
 	pass
 class EndPointError(Error):
 	pass
-	
+#class OverlapError(Error):
+#	pass	
 		
 
 def inputAnalysis(input):
@@ -130,6 +131,16 @@ def findIntersection(x1, y1, x2, y2, w1, z1, w2, z2):
 		y = (a1*c2 - a2*c1)/slopesDif
 		if x >= min([x1,x2]) and x <= max([x1,x2]) and x >= min([w1,w2]) and x <= max([w1,w2]) and y >= min([y1,y2]) and y <= max([y1,y2]) and y >= min([z1,z2]) and y <= max([z1,z2]):
 			return [round(x,2),round(y,2)]
+	else:
+#		if c1 == c2:
+			if (x1 == w1 and y1 == z1) or (x1 == w2 and y1 == z2):
+				return [round(x1,2), round(y1,2)]
+			elif (x2 == w1 and y2 == z1) or (x2 == w2 and y2 == z2):
+				return [round(x2,2), round(y2,2)]
+"""			elif x1 >= min([w1,w2]) and x1 <= max([w1,w2]) and y1 >= min([z1,z2]) and y1 <= max([z1,z2]):
+                                raise OverlapError
+                        elif x2 >= min([w1,w2]) and x2 <= max([w1,w2]) and y2 >= min([z1,z2]) and y2 <= max([z1,z2]):
+                                raise OverlapError"""
 
 
 def printGraph(vertices, edges):
@@ -286,3 +297,5 @@ while True:
      print>>sys.stderr, "Error: Entered wrong format of coordinates. (Missing parenthesis, comma or etc) \n",
   except EndPointError:
      print>>sys.stderr, "Error: Incomplete coordinates for the street, no end point.\n",
+#  except OverlapError:
+#     print>>sys.stderr, "Error: Two segments are overlapping.\n",
