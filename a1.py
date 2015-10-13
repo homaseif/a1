@@ -280,8 +280,8 @@ while True:
      break
   except IndexError:
      pass
-#  except ValueError:
-#     print>>sys.stderr, "Error: Entered invalid input instead of numbers for coordinates.\n",
+  except ValueError:
+     print>>sys.stderr, "Error: Entered invalid input instead of numbers for coordinates.\n",
   except UserInputError:
      print>>sys.stderr, "Error: Entered wrong format of coordinates. (Missing parenthesis, comma or etc) \n",
   except EndPointError:
