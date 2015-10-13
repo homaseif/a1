@@ -232,32 +232,44 @@ while True:
 		edge = []
 		intersections = []
 		lines = []
+		temp = streets.values()
 		lines = copy.deepcopy(streets.values())
 		for i in range(0, len(lines)):
 			lines[i].append('\n')
 
-		for i in range(0, len(lines)):
-			for j in range(i+1, len(lines)):
+		for i in range(0, len(temp)):
+			for j in range(i+1, len(temp)):
 				k = 0
-				while lines[i][k+1] != '\n':
+				while k < (len(temp[i])-1):
 					l = 0
-					while lines[j][l+1] != '\n':
-						inters = findIntersection(lines[i][k][0], lines[i][k][1], lines[i][k+1][0], lines[i][k+1][1], lines[j][l][0], lines[j][l][1], lines[j][l+1][0], lines[j][l+1][1])
+					while l < (len(temp[j])-1):
+						inters = findIntersection(temp[i][k][0], temp[i][k][1], temp[i][k+1][0], temp[i][k+1][1], temp[j][l][0], temp[j][l][1], temp[j][l+1][0], temp[j][l+1][1])
 						if inters != None:
 							if inters not in intersections:
 								intersections.append(inters)
-							if lines[i][k] != inters and lines[i][k+1] != inters:
-								lines[i].insert(k+1, inters)
-							if lines[j][l] != inters and lines[j][l+1] != inters:
-								lines[j].insert(l+1, inters)
+							q = lines[i].index(temp[i][k])
+							z = lines[j].index(temp[j][l])
+							while lines[i][q+1] != '\n':
+								if min([lines[i][q][0], lines[i][q+1][0]]) <= inters[0] <= max([lines[i][q][0],lines[i][q+1][0]]) and min([lines[i][q+1][1],lines[i][q][1]]) <= inters[1] <= max([lines[i][q][1],lines[i][q+1][1]]):
+									if lines[i][q] != inters and lines[i][q+1] != inters:
+										lines[i].insert(q+1, inters)
+									break
+								q = q+1
+							while lines[j][z+1]!='\n':
+								if min([lines[j][z+1][0],lines[j][z][0]]) <= inters[0] <= max([lines[j][z][0],lines[j][z+1][0]]) and min([lines[j][z+1][1],lines[j][z][1]]) <= inters[1] <= max([lines[j][z][1],lines[j][z+1][1]]):
+									if lines[j][z] != inters and lines[j][z+1] != inters:
+										lines[j].insert(z+1, inters)
+									break
+								z = z+1
 						l = l+1
 					k= k+1
-
+		print temp
+		print lines
 		# find edges and vertices
 		vertex = copy.deepcopy(intersections)
 		for x in intersections:
 			for i in range(0, len(lines)):
-				for j in range(0, len(lines[i])-1):
+				for j in range(0, len(lines[i])):
 					if x == lines[i][j]:
 						a = vertex.index(x)
 						if j-1 >= 0: 
