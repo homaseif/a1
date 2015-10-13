@@ -267,7 +267,7 @@ while True:
 		vertex = copy.deepcopy(intersections)
 		for x in intersections:
 			for i in range(0, len(lines)):
-				for j in range(0, len(lines[i])):
+				for j in range(0, len(lines[i])-1):
 					if x == lines[i][j]:
 						a = vertex.index(x)
 						if j-1 >= 0: 
