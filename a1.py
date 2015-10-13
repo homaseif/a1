@@ -34,6 +34,9 @@ def inputAnalysis(input):
 		if len(input2) != 3:
 			print>>sys.stderr, "Error: Name of the street is not specified or specified without double quotation.\n",
 		name=input2[1]
+		if name == '':
+			print>>sys.stderr, "Error: Name of the street can not be empty.\n",
+			raise IndexError
 		points= input2[2].strip()
 		result.append(cmd)
 		result.append(name)
@@ -136,7 +139,17 @@ def printGraph(vertices, edges):
 
 	print>>sys.stdout, "V = {\n",
 	for i in range(0, len(vertices)):
-		print>>sys.stdout, " ", i+1, ": (", vertices[i][0], ",", vertices[i][1], ")\n",
+		a = int(vertices[i][0])
+		b = int(vertices[i][1])
+		if a == vertices[i][0]:
+			print>>sys.stdout, " ", i+1, ": (",  a, ",",
+		else:
+			print>>sys.stdout, " ", i+1, ": (", vertices[i][0], ",",
+		if b == vertices[i][1]:
+			print>>sys.stdout, b, ")\n",
+		else:
+			print>>sys.stdout, vertices[i][1], ")\n",
+
 	print>>sys.stdout, "}\n",
 
 	print>>sys.stdout, "E = {\n",
