@@ -1,389 +1,294 @@
 #!/usr/bin/python
 
-
 import sys
 import copy
 from copy import deepcopy
-db=[]
-res=[]
-vertex=[]
 
-def cartes(str):
-    result=[]
-    i=1
-    if str[0]!='(':
-       raise IndexError
-    number1=[]
-    number2=[]
-    while str[i]!=',':
-          number1.append(str[i])
-          i=i+1
-    temp1=''.join(number1)
-    result.append(float(temp1))
-    i=i+1
-    while str[i]!=')':
-          number2.append(str[i])
-          i=i+1
-    temp2=''.join(number2)
-    result.append(float(temp2))    
-    return result
-     
 
-def modify(line):
-         line1=[] 
-         line1.append(line[0])
-         if len(line)==1:
-            raise AssertionError
-         if line[2]=='"':
-            i=3
-            name=[]
-            while line[i]!='"':
-                  name.append(line[i])
-                  i=i+1
-                  if i==len(line):
-                     raise AttributeError
-            name1=''.join(name)
-            name2=''.join(name1.split())
-            line1.append(name2)
-            i=i+2
-            cartp=[]
-            if i<len(line):
-               while i<len(line):
-                     cartp.append(line[i])
-                     i=i+1
-               cartp1=''.join(cartp)
-               cartp2=cartp1.split()
-               line1.extend(cartp2)
-    
-            return line1;
+streets = {}
+vertex = []
+intersections = []
+edge = []
 
-    
+class Error(Exception):
+	pass
+class UserInputError(Error):
+	pass
+class EndPointError(Error):
+	pass
+	
+		
+
+def inputAnalysis(input):
+	""" Analysis of the input to separate
+	 the command, street name and the coordinates
+	 if applicable."""
+
+	input1=' '.join(input.split())
+	input2=input1.split('"')
+	cmd=input2[0].strip()
+	result = []
+	if cmd not in ['a', 'c', 'r', 'g', '']:
+		print>>sys.stderr, "Error: <", cmd, "> is not a valid command.\n",
+	if cmd == 'a' or cmd == 'c' or cmd == 'r':
+		if len(input2) != 3:
+			print>>sys.stderr, "Error: Name of the street is not specified or specified without double quotation.\n",
+		name=input2[1]
+		if name == '':
+			print>>sys.stderr, "Error: Name of the street can not be empty.\n",
+			raise IndexError
+		points= input2[2].strip()
+		result.append(cmd)
+		result.append(name)
+		result.append(points)
+	elif cmd == 'g':
+		if len(input2) != 1:
+			print>>sys.stderr, "Error: Street name or coordinates is/are specified for command 'g'.\n",
+			raise IndexError
+		result.append(cmd)
+	return result
+
+
+def pointsError(points):
+	""" Analysis of coordinates
+	 to find the errors."""
+
+	if points[0] != '(':
+		raise UserInputError
+	n = len(points)
+        if points[n-2] != ')':
+		raise UserInputError
+        i = 0
+        flag = 0
+        while points[i] != '\n':
+		if points[i] == '(':
+                	if flag == 1 or flag == 2:
+				raise UserInputError
+                        flag = 1
+                        i=i+1
+                elif points[i] == ',':
+                       	if flag != 1:
+				raise UserInputError
+                        flag = 2
+                        i=i+1
+                elif points[i] == ')':
+                        if flag != 2:
+				raise UserInputError
+                        flag = 3
+                        i=i+1
+                else:
+			if points[i] != '-':
+				if ord(points[i]) < ord('0') or ord(points[i])> ord('9'):
+					raise ValueError
+                        i=i+1
+
+		
+def extractNumbers(str):
+	""" Receives (x,y), extracts x and y, 
+	converts them to numbers and
+	returns them as a list."""
+
+	result=[]
+	i=0
+	number1=[]
+    	number2=[]
+    	while str[i]!=',':
+		number1.append(str[i])
+        	i=i+1
+	if len(number1) == 0:
+		raise ValueError
+    	temp1=''.join(number1)
+    	result.append(float(temp1))
+    	i=i+1
+    	while str[i]!=')':
+        	number2.append(str[i])
+        	i=i+1
+	if len(number2) == 0:
+		raise ValueError
+    	temp2=''.join(number2)
+    	result.append(float(temp2))
+    	return result
+
+
+
+def findIntersection(x1, y1, x2, y2, w1, z1, w2, z2):
+	""" Receives the coordinates
+	 of two line segments, finds
+	 the intrsection of them and
+	 returns the result as a list
+	 if there is any intersection."""
+
+	a1 = y2 - y1
+	b1 = x1 - x2
+	c1 = a1*x1 + b1*y1
+	a2 = z2 - z1
+	b2 = w1 - w2
+	c2 = a2*w1 + b2*z1
+	slopesDif = a1*b2 - a2*b1
+	if (slopesDif != 0):
+		x = (b2*c1 - b1*c2)/slopesDif
+		y = (a1*c2 - a2*c1)/slopesDif
+		if x >= min([x1,x2]) and x <= max([x1,x2]) and x >= min([w1,w2]) and x <= max([w1,w2]) and y >= min([y1,y2]) and y <= max([y1,y2]) and y >= min([z1,z2]) and y <= max([z1,z2]):
+			return [round(x,2),round(y,2)]
+	else:
+			if (x1 == w1 and y1 == z1) or (x1 == w2 and y1 == z2):
+				return [x1, y1]
+			elif (x2 == w1 and y2 == z1) or (x2 == w2 and y2 == z2):
+				return [x2, y2]
+
+
+def printGraph(vertices, edges):
+	""" Print the graph by
+	 printing the vertices
+	 and edges."""
+
+	print>>sys.stdout, "V = {\n",
+	for i in range(0, len(vertices)):
+		a = int(vertices[i][0])
+		b = int(vertices[i][1])
+		if a == vertices[i][0]:
+			print>>sys.stdout, " ", i+1, ": (",  a, ",",
+		else:
+			print>>sys.stdout, " ", i+1, ": (", vertices[i][0], ",",
+		if b == vertices[i][1]:
+			print>>sys.stdout, b, ")\n",
+		else:
+			print>>sys.stdout, vertices[i][1], ")\n",
+
+	print>>sys.stdout, "}\n",
+
+	print>>sys.stdout, "E = {\n",
+	for i in range(0, len(edges)-1):
+		print>>sys.stdout, " ", "<", edges[i][0]+1, ",", edges[i][1]+1, ">,\n",
+	if len(edges) != 0:
+		print>>sys.stdout, " ", "<",  edges[len(edges)-1][0]+1, ",", edges[len(edges)-1][1]+1, ">\n",
+	print>>sys.stdout, "}"
+
+
 
 while True:
- try:
-  line=raw_input()
-  if len(line)!=0:
-   command=['a','c','r','g','	',' ']
-   if line[0] not in command:
-      print>>sys.stderr,"Error: <",line[0],"> is not an invalid command.\n",
- 
-   if line[0]=='a':
-      try:
-        st=modify(line)
-        st.pop(0)
-        l=1
-        tempo=copy.deepcopy(st)
-        for i in range(1,len(tempo)):
-            for j in range(0,len(tempo[i])-1):
-                if tempo[i][j]==')' and tempo[i][j+1]=='(':
-                   t1=tempo[i]
-                   t2=t1.split(')')
-                   if t2[len(t2)-1]!='':
-                      raise IndexError
-                   t2.pop(len(t2)-1)
-                   for k in range(0,len(t2)):
-                       t2[k]=t2[k]+')'
-                   for k in range(0,len(t2)):
-                       st.insert(l,t2[k])
-                       l=l+1
-                   st.pop(l)
-                   l=l-1
-                   break
-            l=l+1
-        for i in range(1,len(st)):
-            checking=cartes(st[i])
-        for i in range (0,len(db)):
-            if (db[i][0]==st[0]):
-               raise KeyError
-        if len(st)<3:
-           raise AssertionError()
-        db.append(st)
-        for i in range(1,len(st)):
-            if st[i] not in vertex:
-              vertex.append(st[i])
+  try:
+	input = raw_input()
+	analyzedInput = inputAnalysis(input)
 
-      except AttributeError:
-        print>>sys.stderr,"Error: Entered name of the street in a wrong format.\n",
-      except IndexError:
-        print>>sys.stderr,"Error: Entered a wrong format of coordinates.\n",
-      except ValueError:
-        print>>sys.stderr,"Error: Entered invalid input instead of number for coordinates.\n",
-      except KeyError:
-        print>>sys.stderr,"Error: Entered a street that exists.\n",
-      except AssertionError:
-        print>>sys.stderr,"Error: At least 2 points should be entered along with the name of a street.\n",
+	if analyzedInput[0] == 'a':
+		if streets.has_key(analyzedInput[1]):
+			print>>sys.stderr, "Error: 'a' specified for a street that already exists.\n",
+		else:
+			temp = analyzedInput[2]
+			points = ''. join(temp.split())
+			pointsError(points+'\n')
+			twoPoint = points.split('(')
 
-   elif line[0]=='c':     
-      try:
-        st=modify(line)
-        if len(db)==0:
-           print>>sys.stderr,"Error: 'c' specified for a street that does not exist.\n",
-        flag=False
-        for i in range (0,len(db)):
-           flag=True
-           if (db[i][0]==st[1]):
-              flag=False
-              st.pop(0)
-              l=1
-              tempo=copy.deepcopy(st)
-              for q in range(1,len(tempo)):
-                  for j in range(0,len(tempo[q])-1):
-                      if tempo[q][j]==')' and tempo[q][j+1]=='(':
-                       t1=tempo[q]
-                       t2=t1.split(')')
-                       if t2[len(t2)-1]!='':
-                          raise IndexError
-                       t2.pop(len(t2)-1)
-                       for k in range(0,len(t2)):
-                           t2[k]=t2[k]+')'
-                       for k in range(0,len(t2)):
-                           st.insert(l,t2[k])
-                           l=l+1
-                       st.pop(l)
-                       l=l-1
-                       break
-                  l=l+1
+			if len(twoPoint) < 3:
+				raise EndPointError
 
-              for j in range(1,len(st)):
-                 checking=cartes(st[j])
-              if len(st)<3:
-                 raise AssertionError
-              db.pop(i)
-              db.append(st)
-              for i in range(1,len(st)):
-                    if st[i] not in vertex:
-                       vertex.append(st[i])           
-              break
-        if flag==True:
-           print>>sys.stderr,"Error: 'c' specified for a street that does not exist.\n",
-      except TypeError:
-        print>>sys.stderr,"Error: Entered name of the street in a wrong format.\n",
-      except IndexError:
-        print>>sys.stderr,"Error: Entered a wrong format of coordinates.\n",
-      except ValueError:
-        print>>sys.stderr,"Error: Entered invalid input instead of number for coordinates.\n",
-      except AssertionError:
-        print>>sys.stderr,"Error: At least 2 points should be entered along with the name of a street.\n", 
+			analyzedNumbers = []
+			for i in range(1, len(twoPoint)):
+				analyzedNumbers.append(extractNumbers(twoPoint[i]))
 
-   elif line[0]=='r':
-      try:
-         st=modify(line)
-         if len(st)>2:
-            raise IOError()
-         if len(db)==0:
-           print>>sys.stderr,"Error: 'r' specified for a street that does not exist.\n",
-         flag=False
-         for i in range (0, len(db)):
-            flag=True
-            if(db[i][0]==st[1]):
-               flag=False
-               db.pop(i)
-               break
-         if flag==True:
-            print>>sys.stderr,"Error: 'r' specified for a street that does not exist.\n",
-      except AssertionError:
-         print>>sys.stderr,"Error: Name of the street can not be empty.\n",
-      except TypeError:
-         print>>sys.stderr,"Error: Entered name of the street in a wrong format.\n",
-      except IOError:
-         print>>sys.stderr,"Error: Command 'r' only comes with name of a street.\n",
+			for i in range(1, len(analyzedNumbers)):
+				if analyzedNumbers[i] == analyzedNumbers[i-1]:
+					print>>sys.stderr, "Error: Entered repetitive consecutive coordinates.\n",
+					raise IndexError
 
+			streets[analyzedInput[1]] = analyzedNumbers
 
-   elif line[0]=='g':
-      try:
-         if len(line)>1:
-            raise IOError
-         intersect=[]
-         db1=[]
-         db1=copy.deepcopy(db)
-         i=0
-         equ=[]
-         while i < len(db):
-            j=1
-            equ.append([])
-            while j<(len(db[i])-1):
-              a=cartes(db[i][j])
-              g=cartes(db[i][j+1])
-              res=[]
-              res.extend(a)
-              res.extend(g)
-              if res[2]-res[0]==0:
-                 m=float("inf")
-                 z=res[0]
-              else:
-                 m = (res[3]-res[1])/(res[2]-res[0])
-                 z = res[1]-m*res[0]
-              equ[i].append(m)
-              equ[i].append(z)
-              j=j+1
-            i=i+1
+	elif analyzedInput[0] == 'c':
+                if streets.has_key(analyzedInput[1]):
+                        temp = analyzedInput[2]
+                        points = ''. join(temp.split())
+                        pointsError(points+'\n')
+                        twoPoint = points.split('(')
 
-         for i in range(0,len(db)-1):
-             j=0
-             while j<(len(equ[i])-1):
-                 for k in range(i+1,len(equ)):
-                     l=0 
-                     while l<(len(equ[k])-1):
-                         if equ[i][j]!=equ[k][l]:
-                            if equ[i][j]==float("inf"):
-                               x=equ[i][j+1]
-                               y=(equ[k][l]*x)+equ[k][l+1]
-                            if equ[k][l]==float("inf"):
-                               x=equ[k][l+1]
-                               y=(equ[i][j]*x)+equ[i][j+1]
-                            if equ[i][j]!=float( "inf") and equ[k][l]!=float("inf"):
-                               x = (equ[k][l+1]-equ[i][j+1])/(equ[i][j]-equ[k][l])
-                               y= (equ[i][j]*x)+equ[i][j+1]
-                            res1=[]
-                            c=cartes(db[i][j/2+1])
-                            r=cartes(db[i][j/2+2])
-                            res1.extend(c)
-                            res1.extend(r)
-                            res2=[]
-                            s=cartes(db[k][l/2+1])
-                            p=cartes(db[k][l/2+2])
-                            res2.extend(s)
-                            res2.extend(p)
-                            if ((res1[0]<=x<=res1[2] or res1[2]<=x<=res1[0]) and (res2[0]<=x<=res2[2] or res2[2]<=x<=res2[0])) and ((res1[1]<=y<=res1[3] or res1[3]<=y<=res1[1]) and (res2[1]<=y<=res2[3] or res2[3]<=y<=res2[1])):
-                               if (x).is_integer() and (y).is_integer():
-                                  x=int(x)
-                                  y=int(y)
-                               point="("+str(x)+","+str(y)+")"
-                               if point not in intersect:
-                                  intersect.append(point)
-                               if point not in vertex:
-                                  vertex.append(point)
-                               if db1[i][j/2+2]==db[i][j/2+2]:
-                                  if db1[i][j/2+2]!=point and db1[i][j/2+1]!=point:
-                                     db1[i].insert(j/2+2,point)
-                               if db1[i][j/2+2]!=db[i][j/2+2]:
-                                  q=j/2+2
-                                  while q<len(db1[i]):
-                                        res3=[]
-                                        h=cartes(db1[i][q-1])
-                                        m=cartes(db1[i][q])
-                                        res3.extend(h)
-                                        res3.extend(m)
-                                        if (res3[0]<=x<=res3[2] or res3[2]<=x<=res3[0]) and (res3[1]<=y<=res3[3] or res3[3]<=y<=res3[1]):
-                                           if db1[i][q]!=point and db1[i][q-1]!=point:
-                                              db1[i].insert(q,point)
-                                              break
-                                           else:
-                                              break                               
-                                        q=q+1
+			if len(twoPoint) <3:
+				raise EndPointError
 
- 
-                               if db1[k][l/2+2]==db[k][l/2+2]:
-                                  if db1[k][l/2+2]!=point and db1[k][l/2+1]!=point:   
-                                     db1[k].insert(l/2+2,point)
-                               if db1[k][l/2+2]!=db[k][l/2+2]:
-                                  q=l/2+2
-                                  while q<len(db1[k]):
-                                        res4=[]
-                                        n=cartes(db1[k][q-1])
-                                        o=cartes(db1[k][q])
-                                        res4.extend(n)
-                                        res4.extend(o)
-                                        if (res4[0]<=x<=res4[2] or res4[2]<=x<=res4[0]) and (res4[1]<=y<=res4[3] or res4[3]<=y<=res4[1]):
-                                           if db1[k][q]!=point and db1[k][q-1]!=point:
-                                              db1[k].insert(q,point)
-                                              break
-                                           else:
-                                              break
-                                        q=q+1
-                             
-                         l=l+2
-                 j=j+2
+                        analyzedNumbers = []
+                        for i in range(1, len(twoPoint)):
+                                analyzedNumbers.append(extractNumbers(twoPoint[i]))
 
-         pvertex=[]
-         pvertex.append([])
-         pvertex.append([])
-         pedge=[]
-         for i in range(0,len(intersect)):
-             for j in range(0,len(db1)):
-                 tmp1=vertex.index(intersect[i])
-                 if intersect[i]==db1[j][1]:
-                    pvertex[0].append(db1[j][2])
-                    tmp5=vertex.index(db1[j][2])
-                    pvertex[1].append(tmp5)
-                    pedge.append(tmp1)
-                    pedge.append(tmp5)
-                 if intersect[i]==db1[j][len(db1[j])-1]:
-                    pvertex[0].append(db1[j][len(db1[j])-2])
-                    tmp6=vertex.index(db1[j][len(db1[j])-2])
-                    pvertex[1].append(tmp6)
-                    pedge.append(tmp1)
-                    pedge.append(tmp6)
+			for i in range(1, len(analyzedNumbers)):
+                        	if analyzedNumbers[i] == analyzedNumbers[i-1]:
+                                	print>>sys.stderr, "Error: Entered repetitive consecutive coordinates.\n",
+					raise IndexError
 
-                 for k in range(2,len(db1[j])-1):
-                     if intersect[i] not in pvertex[0]:
-                        pvertex[0].append(intersect[i])
-                        pvertex[1].append(tmp1)
-                     if intersect[i]==db1[j][k]:
-                        pvertex[0].append(db1[j][k-1])
-                        tmp2=vertex.index(db1[j][k-1])
-                        pvertex[1].append(tmp2)
-                        pedge.append(tmp1)
-                        pedge.append(tmp2)
-                        if (k+1)==(len(db1[j])-1):
-                           pvertex[0].append(db[j][-1])
-                           tmp3=vertex.index(db[j][-1])
-                           pvertex[1].append(tmp3)
-                           pedge.append(tmp1)
-                           pedge.append(tmp3)
+                        streets[analyzedInput[1]] = analyzedNumbers
 
-                        else:
-                           pvertex[0].append(db1[j][k+1])
-                           tmp3=vertex.index(db1[j][k+1])
-                           pvertex[1].append(tmp3)
-                           pedge.append(tmp1)
-                           pedge.append(tmp3) 
+                else:
+                        print>>sys.stderr, "Error: 'c' specified for a street that does not exist.\n",
+	
+	elif analyzedInput[0] == 'r':
+		if analyzedInput[2] != '':
+			print>>sys.stderr, "Error: Coordinates specified for command 'r'.\n",
+		elif streets.has_key(analyzedInput[1]) == True:
+			del streets[analyzedInput[1]]
+		else:
+			print>>sys.stderr, "Error: 'r' specified for a street that does not exist.\n",
 
-         pv=[]
-         pv.append([])
-         pv.append([])
-         for i in range(0,len(pvertex[0])):
-             if pvertex[0][i] not in pv[0]:
-                pv[0].append(pvertex[0][i])
-                pv[1].append(pvertex[1][i])
+	
+	elif analyzedInput[0] == 'g':
+		vertex = []
+		edge = []
+		intersections = []
+		lines = []
+		lines = copy.deepcopy(streets.values())
+		for i in range(0, len(lines)):
+			lines[i].append('\n')
 
-         pg=[]
-         try:
-            pg.append(pedge[0])
-            pg.append(pedge[1])
-            i=2
-            while i<len(pedge):
-                j=0
-                while j<i:
-                      checker = True
-                      if (pedge[i]==pedge[j+1] and pedge[i+1]==pedge[j]):
-                         checker = False
-                         break
-                      j=j+2
-                if checker == True:
-                   pg.append(pedge[i])
-                   pg.append(pedge[i+1])
-                i=i+2
-         except IndexError:
-                pass
+		for i in range(0, len(lines)):
+			for j in range(i+1, len(lines)):
+				k = 0
+				while lines[i][k+1] != '\n':
+					l = 0
+					while lines[j][l+1] != '\n':
+						inters = findIntersection(lines[i][k][0], lines[i][k][1], lines[i][k+1][0], lines[i][k+1][1], lines[j][l][0], lines[j][l][1], lines[j][l+1][0], lines[j][l+1][1])
+						if inters != None:
+							if inters not in intersections:
+								intersections.append(inters)
+							if lines[i][k] != inters and lines[i][k+1] != inters:
+								lines[i].insert(k+1, inters)
+							if lines[j][l] != inters and lines[j][l+1] != inters:
+								lines[j].insert(l+1, inters)
+						l = l+1
+					k= k+1
 
-         print>>sys.stdout,"V = {\n",
-         for i in range(0,len(pv[0])):
-           if pv[0][i] in intersect:
-             res=cartes(pv[0][i])
-             print>>sys.stdout,"  ",pv[1][i],": (","%.2f"%res[0],",","%.2f"%res[1],")"
-           else:
-             print>>sys.stdout,"  ",pv[1][i],": ", pv[0][i]
-         print>>sys.stdout, "}"
-         print>>sys.stdout,"E = {"
-         i=0
-         while i<len(pg):
-             print>>sys.stdout,"  <",pg[i],",",pg[i+1],">,"
-             i=i+2
-         print>>sys.stdout,"}"
+		# find edges and vertices
+		vertex = copy.deepcopy(intersections)
+		for x in intersections:
+			for i in range(0, len(lines)):
+				for j in range(0, len(lines[i])-1):
+					if x == lines[i][j]:
+						a = vertex.index(x)
+						if j-1 >= 0: 
+							if lines[i][j-1] != '\n':
+								if lines[i][j-1] not in vertex:
+									vertex.append(lines[i][j-1])
+								b = vertex.index(lines[i][j-1])
+								minab = min(a,b)
+								maxab = max(a,b)
+								if [minab,maxab] not in edge:
+									edge.append([minab,maxab])
+						if j+1 < len(lines[i]): 
+							if lines[i][j+1] != '\n':
+								if lines[i][j+1] not in vertex:
+									vertex.append(lines[i][j+1])
+								c = vertex.index(lines[i][j+1])
+								minac = min(a,c)
+								maxac = max(a,c)
+								if [minac,maxac] not in edge:
+									edge.append([minac,maxac])
 
-
-      except IOError:
-             print>>sys.stderr,"Error: Command 'g' does not come with name of a street or anythong else.\n",
- except EOFError:
-  break
+		# print vertices and edges
+		printGraph(vertex, edge)
+		
+  except EOFError:
+     break
+  except IndexError:
+     pass
+  except ValueError:
+     print>>sys.stderr, "Error: Entered invalid input instead of numbers for coordinates.\n",
+  except UserInputError:
+     print>>sys.stderr, "Error: Entered wrong format of coordinates. (Missing parenthesis, comma or etc) \n",
+  except EndPointError:
+     print>>sys.stderr, "Error: Incomplete coordinates for the street, no end point.\n",
