@@ -263,8 +263,6 @@ while True:
 								z = z+1
 						l = l+1
 					k= k+1
-		print temp
-		print lines
 		# find edges and vertices
 		vertex = copy.deepcopy(intersections)
 		for x in intersections:
